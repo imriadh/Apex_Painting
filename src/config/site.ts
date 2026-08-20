@@ -88,17 +88,17 @@ export const site = {
    * Lead delivery — how form submissions reach the business owner.
    *
    *   provider: "demo"     → simulates a send (what you're looking at now).
-   *   provider: "endpoint" → POSTs JSON to `endpoint`. Paste a Formspree
-   *                           (https://formspree.io/f/xxxx), Getform or any
-   *                           webhook URL. Leads arrive by email instantly.
+   *   provider: "endpoint" → POSTs JSON to `endpoint`. This template is
+   *                           configured for FormSubmit's AJAX endpoint;
+   *                           leads arrive in `notifyEmail` automatically.
    *   provider: "mailto"   → opens the visitor's email app pre-filled to
    *                           `notifyEmail` (zero setup, but requires the
    *                           visitor to press Send).
    */
   form: {
-    provider: "demo" as "demo" | "endpoint" | "mailto",
-    endpoint: "https://formspree.io/f/YOUR_FORM_ID",
-    notifyEmail: "estimates@apexpaintingtx.com",
+    provider: "endpoint" as "demo" | "endpoint" | "mailto",
+    endpoint: "https://formsubmit.co/ajax/mdriad.alone@gmail.com",
+    notifyEmail: "mdriad.alone@gmail.com",
   },
 
   /** Live swatch picker options — the site repaints itself with these. */
