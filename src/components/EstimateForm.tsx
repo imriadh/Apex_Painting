@@ -16,7 +16,7 @@ interface FormValues {
 
 type FieldName = "name" | "phone" | "email" | "project";
 type FormErrors = Partial<Record<FieldName, string>>;
-type Status = "idle" | "submitting" | "success";
+type Status = "idle" | "submitting" | "success" | "error";
 
 const EMPTY: FormValues = { name: "", phone: "", email: "", project: "", message: "", website: "" };
 
@@ -67,16 +67,66 @@ export default function EstimateForm({ selectedProject }: EstimateFormProps) {
     if (Object.keys(nextErrors).length > 0) return;
 
     setStatus("submitting");
-    // Simulated request — wire this to your CRM / email endpoint in production.
-    await new Promise((resolve) => setTimeout(resolve, 900));
 
     if (values.website.trim() !== "") {
       // Bot filled the honeypot — pretend success, discard silently.
       setStatus("success");
       return;
     }
-    setRefCode(`APX-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
-    setStatus("success");
+
+    const projectLabel =
+      site.projectTypes.find((t) => t.value === values.project)?.label ?? "Unspecified";
+    const ref = `APX-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    try {
+      if (site.form.provider === "endpoint") {
+        // Production: POST JSON to Formspree / Getform / any webhook.
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 10_000);
+        const res = await fetch(site.form.endpoint, {
+          method: "POST",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            name: values.name,
+            phone: values.phone,
+            email: values.email,
+            project: projectLabel,
+            message: values.message,
+            ref,
+            source: "website-estimate-form",
+            page: window.location.href,
+            submittedAt: new Date().toISOString(),
+          }),
+        });
+        window.clearTimeout(timeout);
+        if (!res.ok) throw new Error(`Endpoint responded ${res.status}`);
+      } else if (site.form.provider === "mailto") {
+        // Zero-setup fallback: open the visitor's mail app pre-filled.
+        const subject = `New estimate request — ${values.name} (${projectLabel}) [${ref}]`;
+        const body = [
+          `Name: ${values.name}`,
+          `Phone: ${values.phone}`,
+          `Email: ${values.email}`,
+          `Project type: ${projectLabel}`,
+          "",
+          `Details: ${values.message || "—"}`,
+          "",
+          `Ref: ${ref}`,
+          `Page: ${window.location.href}`,
+        ].join("\n");
+        window.location.href = `mailto:${site.form.notifyEmail}?subject=${encodeURIComponent(
+          subject,
+        )}&body=${encodeURIComponent(body)}`;
+      } else {
+        // "demo" provider — simulate a request while the template is unrouted.
+        await new Promise((resolve) => setTimeout(resolve, 900));
+      }
+      setRefCode(ref);
+      setStatus("success");
+    } catch {
+      setStatus("error");
+    }
   };
 
   const reset = () => {
@@ -310,6 +360,34 @@ export default function EstimateForm({ selectedProject }: EstimateFormProps) {
                       className={`${inputBase} resize-none border-line text-ink`}
                     />
                   </div>
+
+                  {status === "error" && (
+                    <div
+                      role="alert"
+                      className="fade-in flex items-start gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-800 sm:col-span-2"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="mt-0.5 h-4 w-4 shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 7.5v5.2M12 16.2v.1" />
+                      </svg>
+                      <span>
+                        <strong className="block font-bold">Something went wrong.</strong>
+                        Your request didn't send — please try again, or call us directly at{" "}
+                        <a href={site.brand.phoneHref} className="font-bold underline underline-offset-2">
+                          {site.brand.phone}
+                        </a>
+                        .
+                      </span>
+                    </div>
+                  )}
 
                   <div className="sm:col-span-2">
                     <button
