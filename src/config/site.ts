@@ -84,6 +84,23 @@ export const site = {
     founded: 2009,
   },
 
+  /**
+   * Lead delivery — how form submissions reach the business owner.
+   *
+   *   provider: "demo"     → simulates a send (what you're looking at now).
+   *   provider: "endpoint" → POSTs JSON to `endpoint`. Paste a Formspree
+   *                           (https://formspree.io/f/xxxx), Getform or any
+   *                           webhook URL. Leads arrive by email instantly.
+   *   provider: "mailto"   → opens the visitor's email app pre-filled to
+   *                           `notifyEmail` (zero setup, but requires the
+   *                           visitor to press Send).
+   */
+  form: {
+    provider: "demo" as "demo" | "endpoint" | "mailto",
+    endpoint: "https://formspree.io/f/YOUR_FORM_ID",
+    notifyEmail: "estimates@apexpaintingtx.com",
+  },
+
   /** Live swatch picker options — the site repaints itself with these. */
   accents: [
     { name: "Signal Orange", hex: "#FF6A2B" },
