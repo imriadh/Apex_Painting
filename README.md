@@ -1,2 +1,2 @@
 # Apex_Painting
-Modern Painting Business Website Template
+Modern Painting Business Website 
